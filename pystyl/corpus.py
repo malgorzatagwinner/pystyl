@@ -13,7 +13,7 @@ if sys.version_info[0] == 2:
 elif sys.version_info[0] == 3:
     import pickle
 
-from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer
+from nltk.tokenize import WhitespaceTokenizer, RegexpTokenizer, sent_tokenize
 
 from . vectorization import Vectorizer
 
@@ -251,11 +251,16 @@ class Corpus:
 
         if tokenizer_option:
             self.tokenizer_option = tokenizer_option
-        tokenizer = get_tokenizer(option=self.tokenizer_option)
+        #tokenizer = get_tokenizer(option=self.tokenizer_option)
 
         self.tokenized_texts = []
         for i, text in enumerate(self.texts):
-            tokens = tokenizer.tokenize(text)
+            if self.tokenizer_option == 'sentences':
+                text = text.replace('\r\n', ' ')
+                tokens = sent_tokenize(text)
+            else:
+                tokenizer = get_tokenizer(option=self.tokenizer_option)
+                tokens = tokenizer.tokenize(text)
             if self.max_size:
                 tokens = tokens[:self.max_size] # cut
             if self.min_size and len(tokens) < self.min_size:
@@ -302,10 +307,10 @@ class Corpus:
                 raise ValueError('No language set for corpus (cf. pronouns)')
             if self.language not in ('en', 'nl'):
                 raise ValueError('No pronouns available for: %s' %(self.language))
-            pronouns = {w.strip() for w in \
+            pronouns = {w.decode("utf-8").strip() for w in \
                             resource_string(__name__,
                                 'pronouns/'+self.language+'.txt')\
-                            if not w.startswith('#')}
+                            if not w.decode("utf-8") .startswith('#')}
         else:
             pronouns = set()
 
@@ -504,5 +509,3 @@ class Corpus:
         else:
             info_string += 'No texts in corpus.'
         return info_string
-
-            
